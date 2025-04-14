@@ -1,0 +1,38 @@
+spring.application.name=Campaign
+server.port=8030
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+
+eureka.client.fetch-registry=true
+eureka.client.register-with-eureka=true
+
+logging.level.feign=DEBUG
+
+# Database configuration for test database
+spring.datasource.url=jdbc:mysql://localhost:3308/sms
+spring.datasource.username=root
+spring.datasource.password=
+
+# Hibernate configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+
+#handle retries, fallbacks
+resilience4j.circuitbreaker.instances.ContactClient.register-health-indicator=true
+resilience4j.circuitbreaker.instances.ContactClient.sliding-window-size=5
+resilience4j.circuitbreaker.instances.ContactClient.failure-rate-threshold=50
+resilience4j.circuitbreaker.instances.ContactClient.wait-duration-in-open-state=5s
+resilience4j.retry.instances.ContactClient.max-attempts=3
+resilience4j.retry.instances.ContactClient.wait-duration=2s
+
+# add to admin dashboard for metrics and stats
+spring.boot.admin.client.url=http://localhost:8020
+management.endpoints.web.exposure.include=*
+management.endpoint.health.show-details=always
+
+#For sorting endpoints alphabetically
+springdoc.swagger-ui.operationsSorter=alpha
+springdoc.swagger-ui.tagsSorter=alpha
+springdoc.api-docs.path=/campaign-api
+springdoc.swagger-ui.path=/campaign-api-docs.html
+springdoc.swagger-ui.config-url=/Campaign

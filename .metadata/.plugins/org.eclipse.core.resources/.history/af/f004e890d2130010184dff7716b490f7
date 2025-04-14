@@ -1,0 +1,18 @@
+spring.application.name=ApiGateway
+server.port=8010
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+
+spring.main.web-application-type=reactive
+
+# Route to Contact Service
+spring.cloud.gateway.routes[0].id=contact-service
+spring.cloud.gateway.routes[0].uri=lb://Contact
+spring.cloud.gateway.routes[0].predicates[0]=Path=/contact/**
+
+# Route to Campaign Service
+spring.cloud.gateway.routes[1].id=campaign-service
+spring.cloud.gateway.routes[1].uri=lb://Campaign
+spring.cloud.gateway.routes[1].predicates[0]=Path=/campaign/**
+
+# Enable service discovery for dynamic routing
+spring.cloud.discovery.locator.enabled=true

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+    <fullyQualifiedTypeName name="com.netflix.infix.lang.infix.antlr.EventFilterParser.compariable_value_function_return"/>
+    <fullyQualifiedTypeName name="com.example.demo.service.ContactClient"/>
+    <fullyQualifiedTypeName name="org.springframework.beans.factory.annotation.Autowired"/>
+    <fullyQualifiedTypeName name="com.example.demo.dto.ContactGetDTO"/>
+    <fullyQualifiedTypeName name="jakarta.servlet.ServletResponse"/>
+    <fullyQualifiedTypeName name="org.springframework.stereotype.Service"/>
+    <fullyQualifiedTypeName name="org.springframework.security.core.userdetails.UserDetailsService"/>
+    <fullyQualifiedTypeName name="com.example.demo.entity.UserRoleEnum"/>
+    <fullyQualifiedTypeName name="com.example.demo.entity.UserStatusEnum"/>
+    <fullyQualifiedTypeName name="com.example.demo.LoggingGatewayFilter"/>
+    <fullyQualifiedTypeName name="java.lang.System"/>
+</qualifiedTypeNameHistroy>

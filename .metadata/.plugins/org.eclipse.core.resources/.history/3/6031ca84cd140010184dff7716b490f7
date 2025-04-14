@@ -1,0 +1,67 @@
+package com.example.demo.service;
+
+import javax.security.sasl.AuthenticationException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.dto.RefreshTokenDTO;
+import com.example.demo.dto.UserDTO;
+import com.example.demo.entity.CustomUserDetails;
+import com.example.demo.entity.User;
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.repository.UserRepository;
+import com.example.demo.dto.AuthRequest;
+import com.example.demo.dto.RegisterRequest;
+import com.example.demo.dto.UpdatePassword;
+import com.example.demo.dto.UserUpdateRequest;
+import com.example.demo.service.JwtService;
+
+@Service
+public class AuthService {
+	
+	@Autowired
+    private AuthenticationManager authenticationManager;
+	@Autowired
+    private UserDetailsService userDetailsService;
+	@Autowired
+    private JwtService jwtUtil;
+	@Autowired
+    private UserRepository userRepository;
+	@Autowired
+    private PasswordEncoder passwordEncoder;
+	
+	//login
+    public UserDTO authenticate(AuthRequest request) {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+
+        CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(request.getUsername());
+        String accessToken = jwtUtil.generateAccessToken(userDetails);
+        String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+        
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(userDetails.getId());
+        userDTO.setUsername(userDetails.getUsername());
+        userDTO.setRole(userDetails.getRole());
+        userDTO.setFirstname(userDetails.getFirstname());
+        userDTO.setMiddlename(userDetails.getMiddlename());
+        userDTO.setLastname(userDetails.getLastName());
+        userDTO.setEmail(userDetails.getEmail());
+        userDTO.setPhone(userDetails.getPhone());
+        userDTO.setAddress(userDetails.getAddress());
+        userDTO.setStatus(userDetails.getStatus());
+        userDTO.setToken(accessToken);
+        userDTO.setRefreshToken(refreshToken);
+
+        return userDTO;
+    }
+
+}

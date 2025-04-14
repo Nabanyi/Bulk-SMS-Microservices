@@ -1,0 +1,94 @@
+package com.example.demo.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.dto.RefreshTokenDTO;
+import com.example.demo.dto.UserDTO;
+import com.example.demo.dto.AuthRequest;
+import com.example.demo.dto.RegisterRequest;
+import com.example.demo.dto.UpdatePassword;
+import com.example.demo.dto.UserUpdateRequest;
+import com.example.demo.service.AuthService;
+import com.example.demo.service.JwtService;
+import com.example.demo.utils.ApiResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/auth")
+@Tag(name = "Authentication", description = "APIs for user authentication")
+public class AuthController {
+
+	@Autowired
+    private AuthService authService;
+	
+	@Autowired
+    private JwtService jwtUtil;
+	
+	@Operation(summary = "Login", description = "Authenticates user and returns a User Object with JWT token")
+    @PostMapping("/login")
+    public ApiResponse<UserDTO> login(@RequestBody AuthRequest request) {
+        return new ApiResponse<UserDTO> (true, "Login Successful", authService.authenticate(request));
+    }
+	
+	//	Refresh Access Token
+	@Operation(summary = "Access Token Refresh", description = "Refresh Access Token")
+	@PostMapping("/refresh")
+    public ApiResponse<RefreshTokenDTO> refresh(@RequestBody RefreshTokenDTO refreshToken) {
+        return new ApiResponse<RefreshTokenDTO> (true, "Refresh Successful", authService.refreshAccessToken(refreshToken) );
+    }
+    
+    // Register End points
+	@Operation(summary = "Register", description = "Registers a new user")
+    @PostMapping("/registers")
+    public ApiResponse<String> register(@Valid @RequestBody RegisterRequest request) {
+    	authService.register(request);
+        return new ApiResponse<>(true, "Registration Successful, You may now login", null);
+    }
+	
+	// Update
+	@Operation(summary = "Update User", description = "Update current user details")
+	@PostMapping("/update")
+	public ApiResponse<String> updateUser(@Valid @RequestBody UserUpdateRequest request) {
+		authService.updateUser(request);
+		return new ApiResponse<>(true, "Account update Successful", null);
+	}
+	
+	// Update Password
+	@Operation(summary = "Update Password", description = "Update current user password")
+	@PostMapping("/update-password")
+	public ApiResponse<String> updatePassword(@Valid @RequestBody UpdatePassword request) {
+		authService.updatePassword(request);
+		return new ApiResponse<>(true, "Password update Successful", null);
+	}
+	
+	@Operation(summary = "Validate Token", description = "Validate tokens to other services")
+	@GetMapping("/validate/{token}")
+	public ResponseEntity<Void> validateToken(@PathVariable(name = "token") String accessToken) {
+		System.out.println("TokenAuth: " +accessToken);
+		System.out.println("Validate TokenAuth: " +jwtUtil.validateRefreshToken(accessToken));
+		
+	    if (jwtUtil.validateRefreshToken(accessToken)) {
+	        return ResponseEntity.ok().build();
+	    } else {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	    }
+	}
+	
+	@GetMapping("/register")
+	public ApiResponse<Void> testAuth() {
+		return new ApiResponse<>(true, "Test Successful", null);
+	}
+
+}

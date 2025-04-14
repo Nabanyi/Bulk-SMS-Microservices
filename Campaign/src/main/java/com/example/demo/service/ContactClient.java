@@ -1,0 +1,16 @@
+package com.example.demo.service;
+
+import java.util.List;
+
+import com.example.demo.dto.ContactGetDTO;
+import com.example.demo.utils.ApiResponse;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.cloud.openfeign.FeignClient;
+
+
+@FeignClient(name = "Contact", fallback = ContactClientFallback.class)
+public interface ContactClient {
+
+	@GetMapping("/contact/get")
+    ApiResponse<List<ContactGetDTO>> getAllContacts();
+}

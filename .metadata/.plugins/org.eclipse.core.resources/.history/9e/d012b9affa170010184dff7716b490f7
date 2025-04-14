@@ -1,0 +1,98 @@
+package com.example.demo;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.core.io.buffer.DataBuffer;
+
+import reactor.core.publisher.Mono;
+
+@Component
+public class JwtAuthenticationFilter implements GatewayFilter {
+
+    private static final List<String> PUBLIC_URLS = List.of(
+        "/auth/login",
+        "/auth/register",
+        "/auth/refresh",
+        "/contact/v3/api-docs",
+        "/campaign/v3/api-docs",
+        "/auth/v3/api-docs",
+        "/swagger-ui",
+        "/contact/get",
+        "/v3/api-docs"
+    );
+    
+    private final WebClient.Builder webClientBuilder;
+
+    public JwtAuthenticationFilter(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        ServerHttpRequest request = exchange.getRequest();
+
+        if (isPublicRoute(request)) {
+        	System.out.println("Requested URL:"+request.getURI().toString());
+        	return chain.filter(exchange);
+        }
+
+        String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return onError(exchange, "Authorization header is missing or invalid", HttpStatus.UNAUTHORIZED);
+        }
+
+        String token = authHeader.substring(7);
+
+        return webClientBuilder.build()
+        	    .get()
+        	    .uri("http://Auth/validate")
+        	    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+        	    .exchangeToMono(clientResponse -> {
+        	        HttpStatus status = (HttpStatus) clientResponse.statusCode();
+
+        	        return clientResponse.bodyToMono(String.class).defaultIfEmpty("")
+        	            .flatMap(body -> {
+        	                if (status.is2xxSuccessful()) {
+        	                    return chain.filter(exchange);
+        	                } else {
+        	                    System.out.println("Auth Service Error: " + body);
+        	                    System.out.println("Auth Service Code: " + status);
+        	                    return onError(exchange, body, status);
+        	                }
+        	            });
+        	    })
+        	    .onErrorResume(error -> {
+        	        System.out.println("Auth call failed: " + error.getMessage());
+        	        return onError(exchange, "Auth service unreachable", HttpStatus.UNAUTHORIZED);
+        	    });
+
+    }
+
+    private boolean isPublicRoute(ServerHttpRequest request) {
+        String path = request.getURI().getPath();
+        return PUBLIC_URLS.stream().anyMatch(path::startsWith);
+    }
+
+    private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus status) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(status);
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+        String json = String.format("{\"success\":false,\"message\":\"%s\",\"data\":null}", err);
+
+        DataBuffer buffer = response.bufferFactory().wrap(json.getBytes(StandardCharsets.UTF_8));
+        return response.writeWith(Mono.just(buffer));
+    }
+}
+
